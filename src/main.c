@@ -61,6 +61,12 @@ void read_xy_values() {
 
 void state_transition() {
 
+
+  q0_next = (!q1 & x) | (q0 & !x) | (!q2);
+  q1_next = (!q2 & q0 & x) | (q1 & !x) | (q2 & q1);
+  q2_next = (q2 & !q0) & (q1 & !x) | (q2 & q1);
+
+
   LED_PORT |= 1 << LED_2;
   _delay_ms(100);
   LED_PORT &= ~(1 << LED_2);
