@@ -27,8 +27,9 @@ void read_xy_values(void); //checking which button is pressed
 void show_output(void); //showing current state + state variables on the screen
 void state_transition(void); //advancing to the new state by implementing transition equations
 
-unsigned char x, y, z1, z2; // inputs and outputs
-unsigned char q0, q1, q2, q0_next, q1_next, q2_next = 0;
+unsigned char x = 0, y = 0, z1 = 0, z2 = 0;
+unsigned char q0 = 0, q1 = 0, q2 = 0;
+unsigned char q0_next = 0, q1_next = 0, q2_next = 0;
 
 int main(void) {  
 
@@ -41,10 +42,14 @@ int main(void) {
     
   while(1) {
 		
-	  read_xy_values();
-    state_transition();
-    show_output();
-    _delay_ms(1000);
+    if(!((BTN_PIN >> BTN_1) & 1U)) {
+
+        read_xy_values();
+        state_transition();
+        show_output();
+        _delay_ms(1000);
+    }
+	  
 
   }
   
@@ -61,10 +66,16 @@ void read_xy_values() {
 
 void state_transition() {
 
+  q0_next = (!q1 && x) || (q0 && !x) || (q2);
+  q1_next = (!q2 && q0 && x) || (q1 && !x) || (q2 && q1);
+  q2_next = (q2 && !q0) || (!q0 && !x && y);
 
-  q0_next = (!q1 & x) | (q0 & !x) | (!q2);
-  q1_next = (!q2 & q0 & x) | (q1 & !x) | (q2 & q1);
-  q2_next = (q2 & !q0) & (q1 & !x) | (q2 & q1);
+  q0 = q0_next ? 1 : 0;
+  q1 = q1_next ? 1 : 0;
+  q2 = q2_next ? 1 : 0;
+
+  z1 = !q0 || !q1 || q2;
+  z2 = (q2 && q1) || (q2 && !q0);
 
 
   LED_PORT |= 1 << LED_2;
@@ -75,7 +86,12 @@ void state_transition() {
 
 void show_output() {
 
-  printf("X = %u \n", x);
-  printf("Y = %u \n", y);
+  unsigned char state = (q2 << 2) | (q1 << 1 ) | q0;
+
+  printf("XY = %u%u --- ", x, y);
+
+  printf("Q2Q1Q0 = %c --- ", ('A' + state));
+
+  printf("Z1Z2 = %u%u \n", z1, z2);
 
 }
